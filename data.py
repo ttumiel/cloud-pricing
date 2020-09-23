@@ -1,4 +1,4 @@
-"Get the latest cloud prices by either scraping or using the API."
+"Get the latest cloud prices."
 import requests
 import math
 from tqdm import tqdm
@@ -23,7 +23,7 @@ class DataProcessor:
         if not os.path.exists(self.table_name): return False
         mod_time = os.path.getmtime(self.table_name)
         time_since_mod = datetime.timedelta(seconds=time.time()-mod_time)
-        return time_since_mod < datetime.timedelta(seconds=7)
+        return time_since_mod < datetime.timedelta(days=7)
 
     def __repr__(self):
         return repr(self.table)
@@ -76,7 +76,7 @@ class AWSProcessor(DataProcessor):
 
         # Download latest pricing data
         data_name = 'ohio-ec2.json'
-#         self.download_data(self.aws_pricing_index_ohio_url, data_name)
+        self.download_data(self.aws_pricing_index_ohio_url, data_name)
 
         with open('ohio-ec2.json', 'r') as f:
             raw_aws_data=json.load(f)
@@ -135,4 +135,4 @@ class AWSProcessor(DataProcessor):
         # Save data
         combined.to_pickle(self.table_name)
 
-#         os.remove(data_name)
+        os.remove(data_name)
