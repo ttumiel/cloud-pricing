@@ -5,6 +5,7 @@ from tqdm import tqdm
 import json
 import pandas as pd
 import os
+import datetime, time
 
 
 class DataProcessor:
@@ -22,10 +23,31 @@ class DataProcessor:
         if not os.path.exists(self.table_name): return False
         mod_time = os.path.getmtime(self.table_name)
         time_since_mod = datetime.timedelta(seconds=time.time()-mod_time)
-        return time_since_mod < datetime.timedelta(days=7)
+        return time_since_mod < datetime.timedelta(seconds=7)
 
     def __repr__(self):
         return repr(self.table)
+
+    def download_data(self, url, fileout):
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            l = math.ceil(float(r.headers['Content-Length'])/8192)
+            with open(fileout, 'wb') as f:
+                for chunk in tqdm(r.iter_content(chunk_size=8192), total=l):
+                    f.write(chunk)
+
+    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False):
+        df = self.table.copy()
+        if not verbose:
+            df = df.filter(['Name', 'CPUs', 'RAM (GB)']+(['GPUs', 'GPU RAM (GB)'] if gpus>0 else [])+['Price ($/hr)'])
+        if not include_unk_price:
+            df = df[df['Price ($/hr)'] != 0]
+
+        df = df[(df['CPUs'] >= cpus) & (df['RAM (GB)'] >= ram)]
+        if gpus > 0:
+            df = df[(df['GPUs'] >= gpus) & (df['GPU RAM (GB)'] >= gpuram)]
+
+        return df.sort_values('Price ($/hr)')[:n]
 
 
 class AWSProcessor(DataProcessor):
