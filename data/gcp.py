@@ -1,8 +1,18 @@
-from data.core import DataProcessor
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+import re
+
+from data.core import FixedInstance
 
 
+class GCPProcessor(FixedInstance):
+    """Process data from Google Cloud.
 
-class GCPProcessor():
+    This processor scrapes the pricing data from the compute
+    pricing page. Google has both a set of predefined instances
+    as well as customisable instances - both of which are handled.
+    """
     url ='https://cloud.google.com/compute/all-pricing'
     gpu_instances = ['n1']
     gcloud_region_shortcodes = {
@@ -18,6 +28,9 @@ class GCPProcessor():
         'asia-east2': 'hk','asia-northeast1': 'ja',
         'asia-northeast2': 'osa','asia-northeast3': 'kr'
     }
+
+    def __init__(self, table_name='gcp_data.pkl'):
+        super().__init__(table_name)
 
     def combine_custom_df(self, df):
         "Clean and rename custom dfs"
@@ -110,9 +123,8 @@ class GCPProcessor():
 
     def get_table(self, frame):
         "Scrape and extract a table from the GCloud website."
-        print(current_name)
         data = requests.get('https://cloud.google.com'+frame)
-        soup = BeautifulSoup(data.content)
+        soup = BeautifulSoup(data.content, 'lxml')
         return self.extract_table(soup.find('table'))
 
     def setup(self):
@@ -123,8 +135,9 @@ class GCPProcessor():
         the titles and getting the tables, appending each to our list
         of dataframes.
         """
+        print('Setting up GCP data...')
         r = requests.get(self.url)
-        s = BeautifulSoup(r.content)
+        s = BeautifulSoup(r.content, 'lxml')
         pricing_body = s.find(class_='devsite-article-body')
 
         custom = False
@@ -136,16 +149,18 @@ class GCPProcessor():
                     current_name = i.get('data-text')
                 t = i.find('iframe')
                 if t is not None:
+                    print(current_name)
+
                     # Always add GPU tables
                     if 'GPU' in current_name:
-                        df = get_table(t.get('src'))
+                        df = self.get_table(t.get('src'))
                         df.insert(0, 'Name', current_name)
                         gpu_dfs.append(df)
 
                     # Look for custom tables if custom else predefined tables
                     elif not(custom ^ ('custom' in current_name)):
                         # Scrape table
-                        df = get_table(t.get('src'))
+                        df = self.get_table(t.get('src'))
                         df.insert(0, 'Name', current_name)
 
                         # Process custom instance tables
@@ -154,10 +169,9 @@ class GCPProcessor():
                         else: df = self.combine_predefined_df(df)
 
                         dfs.append(df)
-                        names.append(current_name)
 
         # Concat all the tables into 1
-        df = pd.concat(dfs).reset_index(drop=True)
+        df = pd.concat(dfs, sort=False).reset_index(drop=True)
 
         # Turn all number columns into numbers and remove "not available" text
         df = df.apply(lambda x: [(re.search(r'\d+\.\d+', q)[0] if isinstance(q, str) and q.startswith('$') else q) for q in x.values])
@@ -210,7 +224,10 @@ class GCPProcessor():
                 out['Name'] = out['Name'] + ' with GPU'
                 out['Price ($/hr)'] = out['Price ($/hr)'] + out['GPU Price ($/hr)']
                 gpu_dfs.append(out)
-            self.table = pd.concat([df, pd.concat(gpu_dfs).reset_index(drop=True)], ignore_index=True)
+
+            table = pd.concat([df, pd.concat(gpu_dfs, sort=False).reset_index(drop=True)],
+                                   ignore_index=True, sort=False)
+            table.to_pickle(self.table_name)
         else:
             self.cpu_pricing = df
             self.gpu_pricing = gpus
