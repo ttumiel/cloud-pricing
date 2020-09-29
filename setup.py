@@ -1,17 +1,17 @@
 import os
-from setuptools import setup
+import setuptools
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-setup(
+setuptools.setup(
     name = "cloud-pricing",
     version = "0.0.1",
     author = "Thomas Tumiel",
     description = ("Compare cloud compute prices."),
     license = "MIT",
     keywords = "cloud",
-    packages=['cloud_pricing'],
+    packages=setuptools.find_packages(),
     long_description=read('README.md'),
     entry_points = {
         'console_scripts': ['cloud-pricing=cloud_pricing.main:main'],
