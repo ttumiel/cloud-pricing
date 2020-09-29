@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 
-from core import FixedInstance
+from data.core import FixedInstance
 
 
 class AWSProcessor(FixedInstance):
@@ -80,7 +80,7 @@ class AWSProcessor(FixedInstance):
         # Rename columns
         combined = combined.rename({
             'vcpu': 'CPUs', 'memory': 'RAM (GB)', 'instanceType': 'Name',
-            'gpu': 'GPUs', 'location': 'Region'
+            'gpu': 'GPUs', 'location': 'Region', 'storage': 'Storage'
         }, axis=1)
 
         # Change values to numbers

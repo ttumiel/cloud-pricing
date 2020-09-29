@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import numpy as np
 
-from core import FixedInstance
+from data.core import FixedInstance
 
 
 class AzureProcessor(FixedInstance):
@@ -13,6 +13,10 @@ class AzureProcessor(FixedInstance):
         'K80': 12, 'M60': 8, 'P100': 16, 'P40': 24,
         'T4': 16, 'V100': 16, np.nan: 0
     }
+    include_cols = [
+        'Instance', 'Region', 'vCPU(s)', 'RAM', 'Temporary storage',
+        'GPU', 'Pay as you go'
+    ]
 
     def __init__(self, table_name='azure_data.pkl'):
         super().__init__(table_name)
@@ -36,29 +40,33 @@ class AzureProcessor(FixedInstance):
             if len(row_data) > 0:
                 all_data.append(row_data)
 
-        return pd.DataFrame(all_data, columns=titles)
+        df = pd.DataFrame(all_data, columns=titles)
+        df.insert(0, 'Region', region)
+        return df
 
     def download_data(self):
         f = requests.get(self.url)
-        soup = BeautifulSoup(f.content)
+        soup = BeautifulSoup(f.content, 'lxml')
         self.tables = soup.find_all('table')
 
     def setup(self):
+        print('Downloading latest Azure data...')
         self.download_data()
 
         # Extract each table and pricing data from HTML
-        dfs = [self.extract_table(t) for t in tables if len(t.find_all('th')) > 0]
+        dfs = [self.extract_table(t) for t in self.tables if len(t.find_all('th')) > 0]
 
         # Parse, clean and combine data
         dfs = [df for df in dfs if any(c in df.columns for c in {'vCPU(s)', 'GPU', 'Core', 'RAM'})]
         cat = pd.concat(dfs, sort=False)
         cat['vCPU(s)'] = [(v if v is not np.nan else c) for v,c in zip(cat['vCPU(s)'], cat['Core'])]
-        cat = cat.filter(['Instance', 'vCPU(s)', 'RAM', 'GPU', 'Pay as you go']).rename({
+        cat = cat.filter(self.include_cols).rename({
             'vCPU(s)': 'CPUs',
             'RAM': 'RAM (GB)',
             'Pay as you go': 'Price ($/hr)',
             'GPU': 'GPUs',
-            'Instance': 'Name'
+            'Instance': 'Name',
+            'Temporary storage': 'Storage'
         }, axis=1)
         cat = cat.replace({'– –\nBlank': np.nan, 'N/A': np.nan}, regex=True).reset_index(drop=True)
 
