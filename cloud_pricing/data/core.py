@@ -7,13 +7,14 @@ import os
 import datetime, time
 from pathlib import Path
 
+from cloud_pricing import data
+
 
 class CloudProcessor:
     def __init__(self):
-        from cloud_pricing.data import AWSProcessor, AzureProcessor, GCPProcessor
         self._tables = []
 
-        for t in [AWSProcessor, AzureProcessor, GCPProcessor]:
+        for t in [data.AWSProcessor, data.AzureProcessor, data.GCPProcessor]:
             self._tables.append(t())
 
 

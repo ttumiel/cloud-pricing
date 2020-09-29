@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 
-from .core import FixedInstance
+from cloud_pricing.data.core import FixedInstance
 
 
 class AWSProcessor(FixedInstance):

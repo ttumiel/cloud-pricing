@@ -2,7 +2,7 @@
 
 import argparse
 
-from cloud_pricing.data import CloudProcessor
+from cloud_pricing.data.core import CloudProcessor
 
 def main():
     parser = argparse.ArgumentParser(description="Compare cloud pricing on the command line. Set the required compute and receive a table of compatible prices. For some services (like AWS) the instance type reflects the best fit given the input constraints.")
