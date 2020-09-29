@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import numpy as np
 
-from data.core import FixedInstance
+from .core import FixedInstance
 
 
 class AzureProcessor(FixedInstance):

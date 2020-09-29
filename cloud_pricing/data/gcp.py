@@ -3,7 +3,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import re
 
-from data.core import FixedInstance
+from .core import FixedInstance
 
 
 class GCPProcessor(FixedInstance):

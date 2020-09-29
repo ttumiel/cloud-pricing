@@ -10,7 +10,7 @@ from pathlib import Path
 
 class CloudProcessor:
     def __init__(self):
-        from data import AWSProcessor, AzureProcessor, GCPProcessor
+        from cloud_pricing.data import AWSProcessor, AzureProcessor, GCPProcessor
         self._tables = []
 
         for t in [AWSProcessor, AzureProcessor, GCPProcessor]:

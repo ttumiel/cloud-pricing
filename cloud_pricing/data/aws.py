@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 
-from data.core import FixedInstance
+from .core import FixedInstance
 
 
 class AWSProcessor(FixedInstance):
