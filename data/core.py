@@ -5,14 +5,33 @@ from tqdm import tqdm
 import pandas as pd
 import os
 import datetime, time
+from pathlib import Path
+
+
+class CloudProcessor:
+    def __init__(self):
+        from data import AWSProcessor, AzureProcessor, GCPProcessor
+        self._tables = []
+
+        for t in [AWSProcessor, AzureProcessor, GCPProcessor]:
+            self._tables.append(t())
+
+
+    # TODO: Add prefix to all labels that are in only one of the processors (like aws-)
+    # Clean up the args here
+    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False):
+        return pd.concat([t.filter(cpus, ram, gpus, gpuram, n=-1, verbose=verbose, include_unk_price=include_unk_price) for t in self._tables], sort=False).sort_values('Price ($/hr)')[:n]
 
 
 class DataProcessor:
+    "Process and store a table of data for a particular provider."
     def __init__(self, table_name):
-        self.table_name = table_name
+        data_path = Path.home()/'.cloud-pricing-data'
+        data_path.mkdir(exist_ok=True)
+        self.table_name = data_path/table_name
         if not self.has_setup:
             self.setup()
-        self.table = pd.read_pickle(table_name)
+        self.table = pd.read_pickle(self.table_name)
 
     def setup(self):
         raise NotImplementedError
