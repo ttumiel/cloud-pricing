@@ -67,8 +67,9 @@ class GCPProcessor(FixedInstance):
 
         df = df[(df['Price'] != 'Not available in this region') & (df['Price'].values != None)]
         df = df.drop(columns='Name')
-        df['Price'] = df['Price'].apply(lambda x: re.search(r'\d+\.\d+', x).group())
-        df['Memory'] = df['Memory'].apply(lambda x: re.search(r'\d+', x).group())
+
+        df[['Price', 'Preemptible price']] = df[['Price', 'Preemptible price']].apply(self.extract_float)
+        df['Memory'] = df['Memory'].apply(self.extract_int)
         df = df.rename(columns={
             'Virtual CPUs': 'CPUs',
             'vCPUs': 'CPUs',
@@ -174,7 +175,7 @@ class GCPProcessor(FixedInstance):
         df = pd.concat(dfs, sort=False).reset_index(drop=True)
 
         # Turn all number columns into numbers and remove "not available" text
-        df = df.apply(lambda x: [(re.search(r'\d+\.\d+', q)[0] if isinstance(q, str) and q.startswith('$') else q) for q in x.values])
+        df = df.apply(lambda x: [(self.extract_float(q) if isinstance(q, str) and q.startswith('$') else q) for q in x.values])
         df = df.replace({
             'Not available in this region': float('nan')
         })
@@ -185,11 +186,8 @@ class GCPProcessor(FixedInstance):
         gpus = pd.concat(gpu_dfs)
         gpus = gpus[(gpus['GPU price'] != 'Not available in this region') & (gpus['GPU price'].values != None)]
         gpus['GPUs'] = [[re.search('\d+', v).group() for v in mem] for mem in gpus['GPUs']]
-        gpus['GPU memory'] = [min(float(re.search(r'\d+', v).group()) for v in mem) for mem in gpus['GPU memory']]
+        gpus['GPU memory'] = [min(float(self.extract_int(v)) for v in mem) for mem in gpus['GPU memory']]
         gpus = gpus.drop(columns=['Name'])
-
-        # Extract floats from all dollar amounts
-        gpus['GPU price'] = gpus['GPU price'].apply(lambda x: re.search(r'\d+\.\d+', x).group())
 
         # Rename columns
         gpus = gpus.rename(columns={
@@ -199,8 +197,9 @@ class GCPProcessor(FixedInstance):
             'Model': 'Name'
         })
 
-        # Make numeric
-        gpus[['Price ($/hr)', 'RAM (GB)']] = gpus[['Price ($/hr)', 'RAM (GB)']].apply(pd.to_numeric)
+        # Extract floats from all dollar amounts and make numeric
+        gpus[['Price ($/hr)', 'Spot ($/hr)']] = gpus[['Price ($/hr)', 'Spot ($/hr)']].apply(self.extract_float)
+        gpus[['Price ($/hr)', 'RAM (GB)', 'Spot ($/hr)']] = gpus[['Price ($/hr)', 'RAM (GB)', 'Spot ($/hr)']].apply(pd.to_numeric)
 
         # Make predefined GPU instances for the instances that can use GPUs
         if not custom:

@@ -3,7 +3,7 @@ import requests
 import math
 from tqdm import tqdm
 import pandas as pd
-import os
+import os, re
 import datetime, time
 from pathlib import Path
 
@@ -29,6 +29,8 @@ class DataProcessor:
     def __init__(self, table_name):
         data_path = Path.home()/'.cloud-pricing-data'
         data_path.mkdir(exist_ok=True)
+        self.float_re = re.compile(r'\d+\.\d+')
+        self.int_re = re.compile(r'\d+')
         self.table_name = data_path/table_name
         if not self.has_setup:
             self.setup()
@@ -55,7 +57,19 @@ class DataProcessor:
                 for chunk in tqdm(r.iter_content(chunk_size=8192), total=l):
                     f.write(chunk)
 
+    def extract_float(self, string):
+        if isinstance(string, str):
+            return self.float_re.search(string.replace(',', '')).group()
+        elif isinstance(string, pd.Series):
+            return string.apply(self.extract_float)
+        else: return string
 
+    def extract_int(self, string):
+        if isinstance(string, str):
+            return self.int_re.search(string.replace(',', '')).group()
+        elif isinstance(string, pd.Series):
+            return string.apply(self.extract_int)
+        else: return string
 class FixedInstance(DataProcessor):
     "Filter from a table of predefined instances"
     def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False):
