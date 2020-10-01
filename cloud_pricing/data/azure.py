@@ -15,7 +15,7 @@ class AzureProcessor(FixedInstance):
     }
     include_cols = [
         'Instance', 'Region', 'vCPU(s)', 'RAM', 'Temporary storage',
-        'GPU', 'Pay as you go'
+        'GPU', 'Pay as you go', 'Spot(% Savings)'
     ]
 
     def __init__(self, table_name='azure_data.pkl'):
@@ -29,7 +29,7 @@ class AzureProcessor(FixedInstance):
             if titles is None:
                 heads = row.find_all('th')
                 assert len(heads) > 0, "Oops, Missing Header!"
-                titles = [h.get_text().strip() for h in heads]
+                titles = [h.get_text().replace('*','').strip() for h in heads]
 
             row_data = []
             for d in row.find_all('td')[:len(titles)]:
@@ -66,7 +66,8 @@ class AzureProcessor(FixedInstance):
             'Pay as you go': 'Price ($/hr)',
             'GPU': 'GPUs',
             'Instance': 'Name',
-            'Temporary storage': 'Storage'
+            'Temporary storage': 'Storage',
+            'Spot(% Savings)': 'Spot ($/hr)'
         }, axis=1)
         cat = cat.replace({'– –\nBlank': np.nan, 'N/A': np.nan}, regex=True).reset_index(drop=True)
 
@@ -91,6 +92,6 @@ class AzureProcessor(FixedInstance):
 
         # Convert numbers
         cat['RAM (GB)'] = [(float(a[:-4].replace(',', '')) if isinstance(a, str) else 0.) for a in cat['RAM (GB)'].values]
-        cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)']] = cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)']].apply(pd.to_numeric)
+        cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)', 'Spot ($/hr)']] = cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)', 'Spot ($/hr)']].apply(pd.to_numeric)
 
         cat.to_pickle(self.table_name)

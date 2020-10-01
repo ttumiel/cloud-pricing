@@ -26,6 +26,12 @@ class AWSProcessor(FixedInstance):
     def __init__(self, table_name='aws_data.pkl'):
         super().__init__(table_name)
 
+    def filter(self, *args, **kwargs):
+        if kwargs['spot']:
+            print("AWSProcessor currently doesn't support spot instances since they are updated live.")
+            return
+        return super().filter(*args, **kwargs)
+
     def setup(self):
         print("Downloading latest AWS data...")
 

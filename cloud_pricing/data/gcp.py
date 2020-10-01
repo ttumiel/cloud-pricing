@@ -75,7 +75,10 @@ class GCPProcessor(FixedInstance):
             'vCPUs': 'CPUs',
             'Price': 'Price ($/hr)',
             'Memory': 'RAM (GB)',
-            'Machine type': 'Name'
+            'Machine type': 'Name',
+            'Preemptible price': 'Spot ($/hr)',
+            '3 year commitment price': '3 year commitment',
+            '1 year commitment price': '1 year commitment'
         })
 
         return df
@@ -136,7 +139,7 @@ class GCPProcessor(FixedInstance):
         the titles and getting the tables, appending each to our list
         of dataframes.
         """
-        print('Setting up GCP data...')
+        print('Downloading latest GCP data...')
         r = requests.get(self.url)
         s = BeautifulSoup(r.content, 'lxml')
         pricing_body = s.find(class_='devsite-article-body')
@@ -194,7 +197,8 @@ class GCPProcessor(FixedInstance):
             'GPUs': 'GPU Counts',
             'GPU price': 'Price ($/hr)',
             'GPU memory': 'RAM (GB)',
-            'Model': 'Name'
+            'Model': 'Name',
+            'Preemptible GPU price': 'Spot ($/hr)'
         })
 
         # Extract floats from all dollar amounts and make numeric
@@ -212,6 +216,7 @@ class GCPProcessor(FixedInstance):
             g['GPUs'] = g['GPUs'].apply(pd.to_numeric)
             g['RAM (GB)'] = g['RAM (GB)'] * g['GPUs']
             g['Price ($/hr)'] = g['Price ($/hr)'] * g['GPUs']
+            g['Spot ($/hr)'] = g['Spot ($/hr)'] * g['GPUs']
 
             for gi in self.gpu_instances:
                 gi_df = df[df['Name'].str.startswith(gi)]
@@ -222,6 +227,7 @@ class GCPProcessor(FixedInstance):
                         ])
                 out['Name'] = out['Name'] + ' with GPU'
                 out['Price ($/hr)'] = out['Price ($/hr)'] + out['GPU Price ($/hr)']
+                out['Spot ($/hr)'] = out['Spot ($/hr)'] + out['GPU Spot ($/hr)']
                 gpu_dfs.append(out)
 
             table = pd.concat([df, pd.concat(gpu_dfs, sort=False).reset_index(drop=True)],

@@ -20,8 +20,9 @@ class CloudProcessor:
 
     # TODO: Add prefix to all labels that are in only one of the processors (like aws-)
     # Clean up the args here
-    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False):
-        return pd.concat([t.filter(cpus, ram, gpus, gpuram, n=-1, verbose=verbose, include_unk_price=include_unk_price) for t in self._tables], sort=False).sort_values('Price ($/hr)')[:n]
+    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False, spot=False):
+        price_name = 'Spot ($/hr)' if spot else 'Price ($/hr)'
+        return pd.concat([t.filter(cpus, ram, gpus, gpuram, n=-1, verbose=verbose, include_unk_price=include_unk_price, spot=spot) for t in self._tables], sort=False).sort_values(price_name)[:n]
 
 
 class DataProcessor:
@@ -72,18 +73,19 @@ class DataProcessor:
         else: return string
 class FixedInstance(DataProcessor):
     "Filter from a table of predefined instances"
-    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False):
+    def filter(self, cpus, ram, gpus=0, gpuram=10, n=10, verbose=False, include_unk_price=False, spot=False):
         df = self.table.copy()
+        price_name = 'Spot ($/hr)' if spot else 'Price ($/hr)'
         if not verbose:
-            df = df.filter(['Name', 'CPUs', 'RAM (GB)']+(['GPUs', 'GPU RAM (GB)'] if gpus>0 else [])+['Price ($/hr)'])
+            df = df.filter(['Name', 'CPUs', 'RAM (GB)']+(['GPUs', 'GPU RAM (GB)'] if gpus>0 else [])+[price_name])
         if not include_unk_price:
-            df = df[df['Price ($/hr)'] != 0]
+            df = df[(df[price_name] != 0) & (df[price_name] != float('nan'))]
 
         df = df[(df['CPUs'] >= cpus) & (df['RAM (GB)'] >= ram)]
         if gpus > 0:
             df = df[(df['GPUs'] >= gpus) & (df['GPU RAM (GB)'] >= gpuram)]
 
-        return df.sort_values('Price ($/hr)')[:n]
+        return df.sort_values(price_name)[:n]
 
 class CustomInstance(DataProcessor):
     """Process instances that can be customized on demand
