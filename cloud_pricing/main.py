@@ -18,15 +18,17 @@ def main():
         help="Increase verbosity, showing all info columns.")
     parser.add_argument("-n", default=10, type=int,
         help="The number of results to show.")
-    parser.add_argument("--unk_price", "-U", default=False, action='store_true',
+    parser.add_argument("--unk_price", "-P", default=False, action='store_true',
         help="Exclude products that don't have a known price.")
     parser.add_argument("--out", "-o", default=None, type=str,
         help="Save the outputs to a file. {csv | json}")
+    parser.add_argument("--spot", "-s", default=False, action='store_true',
+        help="Use spot (preemptible) prices.")
 
     args = parser.parse_args()
     print(args)
     proc = CloudProcessor()
-    data = proc.filter(args.cpus, args.ram, args.gpus, args.gpuram, args.n, args.verbose, args.unk_price)
+    data = proc.filter(args.cpus, args.ram, args.gpus, args.gpuram, args.n, args.verbose, args.unk_price, args.spot)
 
     if args.out is not None:
         if args.out.endswith('csv'):
