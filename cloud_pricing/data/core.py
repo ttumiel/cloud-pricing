@@ -9,14 +9,28 @@ from pathlib import Path
 
 from cloud_pricing import data
 
+PROVIDERS = {
+    'GCP': data.gcp.GCPProcessor,
+    'AWS': data.aws.AWSProcessor,
+    'AZURE': data.azure.AzureProcessor,
+}
+
 
 class CloudProcessor:
-    def __init__(self):
+    def __init__(self, providers="ALL"):
         self._tables = []
 
-        for t in [data.AWSProcessor, data.AzureProcessor, data.GCPProcessor]:
+        if providers == 'ALL':
+            processors = list(PROVIDERS.values())
+        else:
+            processors = [PROVIDERS[p] for p in providers.split(',')]
+
+        for t in processors:
             self._tables.append(t())
 
+    def update(self):
+        for t in self._tables:
+            t.setup()
 
     # TODO: Add prefix to all labels that are in only one of the processors (like aws-)
     # Clean up the args here

@@ -24,10 +24,13 @@ def main():
         help="Save the outputs to a file. {csv | json}")
     parser.add_argument("--spot", "-s", default=False, action='store_true',
         help="Use spot (preemptible) prices.")
+    parser.add_argument("--providers", default='ALL',
+        help=("List of providers to search over. Comma separated string "
+              "of 'AWS', 'Azure', 'GCP', or 'All'."))
 
     args = parser.parse_args()
     print(args)
-    proc = CloudProcessor()
+    proc = CloudProcessor(args.providers.upper())
     data = proc.filter(args.cpus, args.ram, args.gpus, args.gpuram, args.n, args.verbose, args.unk_price, args.spot)
 
     if args.out is not None:
