@@ -11,7 +11,7 @@ class AzureProcessor(FixedInstance):
     url = 'https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/'
     azure_gpus_ram = {
         'K80': 12, 'M60': 8, 'P100': 16, 'P40': 24,
-        'T4': 16, 'V100': 16, np.nan: 0
+        'T4': 16, 'V100': 16, 'A100': 40, np.nan: 0
     }
     include_cols = [
         'Instance', 'Region', 'vCPU(s)', 'RAM', 'Temporary storage',
