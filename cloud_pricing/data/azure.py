@@ -94,4 +94,4 @@ class AzureProcessor(FixedInstance):
         cat['RAM (GB)'] = [(float(a[:-4].replace(',', '')) if isinstance(a, str) else 0.) for a in cat['RAM (GB)'].values]
         cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)', 'Spot ($/hr)']] = cat[['CPUs','GPUs','Price ($/hr)','RAM (GB)', 'Spot ($/hr)']].apply(pd.to_numeric)
 
-        cat.to_pickle(self.table_name)
+        cat.to_pickle(self.table_name, protocol=4)

@@ -232,7 +232,7 @@ class GCPProcessor(FixedInstance):
 
             table = pd.concat([df, pd.concat(gpu_dfs, sort=False).reset_index(drop=True)],
                                    ignore_index=True, sort=False)
-            table.to_pickle(self.table_name)
+            table.to_pickle(self.table_name, protocol=4)
         else:
             self.cpu_pricing = df
             self.gpu_pricing = gpus

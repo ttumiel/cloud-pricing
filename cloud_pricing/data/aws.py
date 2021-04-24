@@ -94,6 +94,6 @@ class AWSProcessor(FixedInstance):
         combined[['CPUs','GPUs','Price ($/hr)','RAM (GB)']] = combined[['CPUs','GPUs','Price ($/hr)','RAM (GB)']].apply(pd.to_numeric)
 
         # Save data
-        combined.to_pickle(self.table_name)
+        combined.to_pickle(self.table_name, protocol=4)
 
         os.remove(data_name)
