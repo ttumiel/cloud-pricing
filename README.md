@@ -11,7 +11,19 @@ pip install git+https://github.com/ttumiel/cloud-pricing
 
 # Query all prices that have at least 8 cpus, 32GB RAM,
 # 1 GPU with 16GB of GPU RAM
+# The first run will download the prices and cache them
+# for additional queries.
 cloud-pricing --cpus 8 --ram 32 --gpus 1 --gpuram 16
+
+# Filter for spot (preemptible) instances using --spot/-s
+cloud-pricing --cpus 8 --spot
+
+# Search only particular providers like azure and google cloud
+cloud-pricing --cpus 8 --providers azure,gcp
+
+# Update the provider database
+cloud-pricing --update
+
 
 # For more info about the flags, see help
 cloud-pricing -h
@@ -63,5 +75,10 @@ pip install -e .
 ```
 
 Some things I'd like to add:
-- Spot instances
+- Spot instances. Done: try the `--spot` flag.
 - Storage costs
+
+### Bugs
+
+If you encounter something strange, feel free to open an issue. If you find out what's wrong and you'd like to fix it, open a pull request.
+
