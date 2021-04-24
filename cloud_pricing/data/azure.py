@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import numpy as np
 
-from cloud_pricing.data.core import FixedInstance
+from cloud_pricing.data.interface import FixedInstance
 
 
 class AzureProcessor(FixedInstance):

@@ -3,7 +3,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import re
 
-from cloud_pricing.data.core import FixedInstance
+from cloud_pricing.data.interface import FixedInstance
 
 
 class GCPProcessor(FixedInstance):
