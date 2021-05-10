@@ -21,7 +21,8 @@ setuptools.setup(
         'pandas',
         'requests',
         'beautifulsoup4',
-        'tqdm'
+        'tqdm',
+        'lxml'
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
